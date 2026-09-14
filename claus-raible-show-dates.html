@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="hu">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Koncertek</title>
+<title>Concerts</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -72,7 +72,7 @@
     margin: 0 0 var(--space-3);
   }
 
-  /* ---------- Hero (következő koncert) ---------- */
+  /* ---------- Hero (next concert) ---------- */
 
   .hero{
     position: relative;
@@ -188,7 +188,7 @@
   .ticket-btn:hover{ filter: brightness(1.08); }
   .ticket-btn:focus-visible{ outline: 2px solid var(--text); outline-offset: 3px; }
 
-  /* ---------- Listák (következő / korábbi koncertek) ---------- */
+  /* ---------- Lists (upcoming / past concerts) ---------- */
 
   .list{
     display: flex;
@@ -293,7 +293,7 @@
     }
   }
 
-  /* ---------- Állapot üzenetek ---------- */
+  /* ---------- Status messages ---------- */
 
   .status-message{
     color: var(--text-dim);
@@ -311,7 +311,7 @@
 
 <div class="page">
   <main id="app" aria-live="polite">
-    <p class="status-message">Koncertek betöltése…</p>
+    <p class="status-message">Loading concerts…</p>
   </main>
 </div>
 
@@ -320,22 +320,22 @@
   'use strict';
 
   // ---------------------------------------------------------------
-  // BEÁLLÍTÁSOK — ha másik Google Sheetet vagy munkalapot használsz,
-  // itt kell módosítani. A gid a Sheet URL-jében látható
-  // (pl. .../edit#gid=123456) a kiválasztott munkalap fülre kattintva.
+  // SETTINGS — change these if you use a different Google Sheet or tab.
+  // The gid is visible in the Sheet's URL (e.g. .../edit#gid=123456)
+  // after clicking the relevant tab.
   // ---------------------------------------------------------------
   var CONFIG = {
-    // A Google Sheets "Fájl → Megosztás → Közzététel a weben" funkciója által adott
-    // link, a /pubhtml végződés nélkül. Ez a link küld megfelelő CORS fejlécet,
-    // ezért ezt kell használni a sima /export?format=csv link helyett.
+    // The link provided by Google Sheets' "File → Share → Publish to web"
+    // feature, without the trailing /pubhtml. This link sends proper CORS
+    // headers, so it should be used instead of the plain /export?format=csv link.
     publishedBaseUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-LzOHv3-4GZ0YXxkxwg9_2z0_43ktKTuPB4L67TJzbhF_n-srMajK9Jr-ivpsOcyqUewppOYDvnsK/pub',
     gid: '0'
   };
 
   var appEl = document.getElementById('app');
 
-  // Oszlopnév-szinonimák: a kód ez alapján ismeri fel a Sheet tényleges
-  // oszlopait, függetlenül a sorrendtől és a pontos elnevezéstől.
+  // Column name synonyms: the code uses these to recognize the actual
+  // columns in the Sheet, regardless of order or exact wording.
   var FIELD_SYNONYMS = {
     date: ['date', 'datum'],
     time: ['time', 'ido', 'idopont'],
@@ -361,7 +361,7 @@
         var header = rows[0];
         var colMap = buildColumnMap(header);
         if (colMap.date === undefined){
-          renderError('A táblázat szerkezete jelenleg nem felismerhető (hiányzik a dátum oszlop).');
+          renderError('The spreadsheet structure could not be recognized (missing a date column).');
           return;
         }
 
@@ -373,14 +373,14 @@
             var ev = mapRowToEvent(raw, colMap);
             if (ev) events.push(ev);
           } catch (rowErr){
-            console.warn('Koncertmodul: egy sor kihagyva érvénytelen adat miatt.', rowErr);
+            console.warn('Concert module: a row was skipped due to invalid data.', rowErr);
           }
         }
         renderEvents(events);
       })
       .catch(function(err){
-        console.error('Koncertmodul: hiba a betöltés során.', err);
-        renderError('Nem sikerült betölteni a koncertadatokat. Kérjük, próbáld meg később.');
+        console.error('Concert module: an error occurred while loading data.', err);
+        renderError('Could not load the concert data. Please try again later.');
       })
       .then(scheduleNotify);
   }
@@ -402,7 +402,7 @@
   }
 
   // ---------------------------------------------------------------
-  // CSV feldolgozás
+  // CSV parsing
   // ---------------------------------------------------------------
 
   function parseCSV(text){
@@ -472,7 +472,7 @@
   }
 
   // ---------------------------------------------------------------
-  // Sor -> esemény objektum
+  // Row -> event object
   // ---------------------------------------------------------------
 
   function mapRowToEvent(raw, colMap){
@@ -508,7 +508,7 @@
   }
 
   // ---------------------------------------------------------------
-  // Dátum- és időkezelés (Europe/Budapest)
+  // Date and time handling (Europe/Budapest)
   // ---------------------------------------------------------------
 
   function parseSheetDate(dateStr, timeStr){
@@ -540,7 +540,7 @@
     var dateObj = new Date(Date.UTC(y, m - 1, d, hh, mm));
     if (isNaN(dateObj.getTime())) return null;
     if (dateObj.getUTCFullYear() !== y || dateObj.getUTCMonth() !== m - 1 || dateObj.getUTCDate() !== d){
-      return null; // pl. 2026.02.30 -> érvénytelen, JS automatikus átgörgetését szűrjük ki
+      return null; // e.g. 2026.02.30 -> invalid, filters out JS's automatic date rollover
     }
 
     return { dateObj: dateObj, hasTime: hasTime, y: y, m: m, d: d };
@@ -566,21 +566,21 @@
   function dateOnlyValue(y, m, d){ return y * 10000 + m * 100 + d; }
 
   function formatMonthShort(dateObj){
-    return new Intl.DateTimeFormat('hu-HU', { month: 'short', timeZone: 'UTC' }).format(dateObj).replace('.', '');
+    return new Intl.DateTimeFormat('en-GB', { month: 'short', timeZone: 'UTC' }).format(dateObj);
   }
 
   function formatWeekday(dateObj){
-    var wd = new Intl.DateTimeFormat('hu-HU', { weekday: 'long', timeZone: 'UTC' }).format(dateObj);
+    var wd = new Intl.DateTimeFormat('en-GB', { weekday: 'long', timeZone: 'UTC' }).format(dateObj);
     return wd.charAt(0).toUpperCase() + wd.slice(1);
   }
 
   function formatTime(hasTime, dateObj){
     if (!hasTime) return '';
-    return new Intl.DateTimeFormat('hu-HU', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' }).format(dateObj);
+    return new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' }).format(dateObj);
   }
 
   // ---------------------------------------------------------------
-  // Renderelés
+  // Rendering
   // ---------------------------------------------------------------
 
   function renderEvents(events){
@@ -609,20 +609,20 @@
       appEl.appendChild(buildHeroSection(featured));
       var rest = future.slice(1);
       if (rest.length > 0){
-        appEl.appendChild(buildListSection('Következő koncertek', rest, false));
+        appEl.appendChild(buildListSection('Upcoming concerts', rest, false));
       }
     } else {
-      appEl.appendChild(buildStatusMessage('Jelenleg nincs meghirdetett következő koncert.', false));
+      appEl.appendChild(buildStatusMessage('There are no upcoming concerts announced at the moment.', false));
     }
 
     if (past.length > 0){
-      appEl.appendChild(buildListSection('Korábbi koncertek', past, true));
+      appEl.appendChild(buildListSection('Past concerts', past, true));
     }
   }
 
   function renderEmpty(){
     appEl.innerHTML = '';
-    appEl.appendChild(buildStatusMessage('Jelenleg nincs elérhető koncertinformáció.', false));
+    appEl.appendChild(buildStatusMessage('No concert information is available at the moment.', false));
   }
 
   function renderError(msg){
@@ -643,7 +643,7 @@
 
     var label = document.createElement('p');
     label.className = 'section-label';
-    label.textContent = 'Következő koncert';
+    label.textContent = 'Next concert';
     section.appendChild(label);
 
     var hero = document.createElement('div');
@@ -692,7 +692,7 @@
     var wrap = document.createElement('div');
     wrap.className = big ? 'hero-content' : 'row-main';
 
-    var primaryText = ev.artist || ev.venue || 'Koncert';
+    var primaryText = ev.artist || ev.venue || 'Concert';
     var primary = document.createElement(big ? 'h3' : 'div');
     primary.className = 'primary';
     primary.textContent = primaryText;
@@ -718,7 +718,7 @@
       if (timeStr){
         var t = document.createElement('div');
         t.className = 'time';
-        t.textContent = timeStr + ' óra';
+        t.textContent = timeStr;
         wrap.appendChild(t);
       }
       if (ev.info){
@@ -733,7 +733,7 @@
         a.href = ev.ticketLink;
         a.target = '_blank';
         a.rel = 'noopener noreferrer';
-        a.textContent = 'Jegyek';
+        a.textContent = 'Tickets';
         wrap.appendChild(a);
       }
     } else {
@@ -776,7 +776,7 @@
         a.href = ev.ticketLink;
         a.target = '_blank';
         a.rel = 'noopener noreferrer';
-        a.textContent = 'Jegyek';
+        a.textContent = 'Tickets';
         ticketWrap.appendChild(a);
         row.appendChild(ticketWrap);
       }
@@ -789,14 +789,14 @@
   }
 
   // ---------------------------------------------------------------
-  // Magasság jelzése a szülő (Odoo) oldal felé iframe-beágyazáshoz
+  // Notify the parent (Odoo) page of the height, for iframe embedding
   // ---------------------------------------------------------------
 
   function notifyHeight(){
     var height = Math.ceil(document.documentElement.getBoundingClientRect().height);
     try {
       window.parent.postMessage({ type: 'concert-module-resize', height: height }, '*');
-    } catch (e){ /* iframe nélküli előnézetben nincs teendő */ }
+    } catch (e){ /* nothing to do when previewed outside an iframe */ }
   }
 
   var resizeScheduled = false;
