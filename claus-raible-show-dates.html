@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Koncertek</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0c0b0e;
+    --surface: #16141a;
+    --surface-raised: #1d1a22;
+    --line: #2a2730;
+    --text: #f3f0ea;
+    --text-dim: #9c99a3;
+    --text-faint: #68656e;
+    --accent: #e3a542;
+    --accent-ink: #1a1305;
+    --accent-glow: rgba(227,165,66,0.38);
+    --radius-lg: 22px;
+    --radius-sm: 12px;
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 16px;
+    --space-4: 24px;
+    --space-5: 40px;
+    --space-6: 64px;
+    --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --max-width: 1080px;
+  }
+
+  *, *::before, *::after{ box-sizing: border-box; }
+
+  html, body{
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+  }
+
+  body{
+    font-family: var(--font-body);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  a{ color: inherit; }
+
+  .page{
+    width: 100%;
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: var(--space-5) var(--space-4) var(--space-6);
+  }
+
+  @media (max-width: 480px){
+    .page{ padding: var(--space-4) var(--space-3) var(--space-5); }
+  }
+
+  section + section,
+  .status-message{
+    margin-top: var(--space-5);
+  }
+
+  .section-label{
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin: 0 0 var(--space-3);
+  }
+
+  /* ---------- Hero (következő koncert) ---------- */
+
+  .hero{
+    position: relative;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background:
+      radial-gradient(120% 140% at 12% 15%, var(--accent-glow) 0%, transparent 55%),
+      var(--surface);
+    background-size: cover;
+    background-position: center;
+    padding: var(--space-6) var(--space-5);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-5);
+    align-items: center;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: heroIn 0.6s ease-out forwards;
+  }
+
+  .hero.has-image{
+    background-blend-mode: normal;
+  }
+
+  @keyframes heroIn{
+    to{ opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .hero{ animation: none; opacity: 1; transform: none; }
+  }
+
+  @media (max-width: 640px){
+    .hero{
+      grid-template-columns: 1fr;
+      padding: var(--space-4);
+      gap: var(--space-3);
+      text-align: left;
+    }
+  }
+
+  .hero-date{
+    text-align: center;
+    min-width: 120px;
+  }
+
+  .hero-date .weekday{
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    margin-bottom: var(--space-1);
+  }
+
+  .hero-date .day{
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(3.4rem, 9vw, 5.4rem);
+    line-height: 1;
+    color: var(--accent);
+  }
+
+  .hero-date .month-year{
+    font-size: 1rem;
+    color: var(--text-dim);
+    margin-top: var(--space-1);
+  }
+
+  .hero-content .primary{
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.7rem, 3.4vw, 2.5rem);
+    line-height: 1.15;
+    margin: 0 0 4px;
+  }
+
+  .hero-content .secondary{
+    font-size: 1.1rem;
+    color: var(--text-dim);
+    margin-bottom: var(--space-2);
+  }
+
+  .hero-content .location{
+    color: var(--text-dim);
+    font-size: 1.05rem;
+  }
+
+  .hero-content .time{
+    color: var(--text-dim);
+    font-size: 1.05rem;
+    margin-top: 2px;
+  }
+
+  .hero-content .info{
+    color: var(--text-dim);
+    margin: var(--space-3) 0 0;
+    max-width: 58ch;
+    line-height: 1.55;
+  }
+
+  .ticket-btn{
+    display: inline-block;
+    margin-top: var(--space-4);
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 600;
+    font-size: 0.98rem;
+    padding: 12px 24px;
+    border-radius: 999px;
+    text-decoration: none;
+    transition: filter 0.15s ease, transform 0.15s ease;
+  }
+
+  .ticket-btn:hover{ filter: brightness(1.08); }
+  .ticket-btn:focus-visible{ outline: 2px solid var(--text); outline-offset: 3px; }
+
+  /* ---------- Listák (következő / korábbi koncertek) ---------- */
+
+  .list{
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .concert-row{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3) var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .concert-row:hover{
+    border-color: var(--accent-glow);
+    background: var(--surface-raised);
+  }
+
+  .concert-row.is-past{
+    opacity: 0.55;
+    background: transparent;
+  }
+
+  .concert-row.is-past:hover{
+    opacity: 0.8;
+    border-color: var(--line);
+    background: transparent;
+  }
+
+  .row-date{
+    flex: 0 0 56px;
+    text-align: center;
+  }
+
+  .row-date .day{
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  .row-date .month{
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .row-main{
+    flex: 1 1 220px;
+    min-width: 0;
+  }
+
+  .row-main .primary{
+    font-weight: 600;
+    color: var(--text);
+    overflow-wrap: anywhere;
+  }
+
+  .row-main .secondary{
+    color: var(--text-dim);
+    font-size: 0.92rem;
+  }
+
+  .row-main .meta{
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    margin-top: 2px;
+    overflow-wrap: anywhere;
+  }
+
+  .row-ticket{
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+
+  .row-ticket a{
+    display: inline-block;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: 1px solid var(--line);
+    padding: 8px 16px;
+    border-radius: 999px;
+    transition: border-color 0.15s ease;
+  }
+
+  .row-ticket a:hover{ border-color: var(--accent); }
+  .row-ticket a:focus-visible{ outline: 2px solid var(--text); outline-offset: 3px; }
+
+  @media (max-width: 480px){
+    .row-ticket{
+      flex-basis: 100%;
+      margin-left: 0;
+    }
+  }
+
+  /* ---------- Állapot üzenetek ---------- */
+
+  .status-message{
+    color: var(--text-dim);
+    font-size: 1.02rem;
+    padding: var(--space-4) 0;
+    line-height: 1.6;
+  }
+
+  .status-message.is-error{
+    color: #d98a6b;
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <main id="app" aria-live="polite">
+    <p class="status-message">Koncertek betöltése…</p>
+  </main>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  // ---------------------------------------------------------------
+  // BEÁLLÍTÁSOK — ha másik Google Sheetet vagy munkalapot használsz,
+  // itt kell módosítani. A gid a Sheet URL-jében látható
+  // (pl. .../edit#gid=123456) a kiválasztott munkalap fülre kattintva.
+  // ---------------------------------------------------------------
+  var CONFIG = {
+    // A Google Sheets "Fájl → Megosztás → Közzététel a weben" funkciója által adott
+    // link, a /pubhtml végződés nélkül. Ez a link küld megfelelő CORS fejlécet,
+    // ezért ezt kell használni a sima /export?format=csv link helyett.
+    publishedBaseUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-LzOHv3-4GZ0YXxkxwg9_2z0_43ktKTuPB4L67TJzbhF_n-srMajK9Jr-ivpsOcyqUewppOYDvnsK/pub',
+    gid: '0'
+  };
+
+  var appEl = document.getElementById('app');
+
+  // Oszlopnév-szinonimák: a kód ez alapján ismeri fel a Sheet tényleges
+  // oszlopait, függetlenül a sorrendtől és a pontos elnevezéstől.
+  var FIELD_SYNONYMS = {
+    date: ['date', 'datum'],
+    time: ['time', 'ido', 'idopont'],
+    country: ['country', 'orszag'],
+    city: ['city', 'telepules', 'varos'],
+    venue: ['venue', 'helyszin'],
+    ticketLink: ['ticket links', 'ticket link', 'tickets', 'ticket', 'jegyek', 'jegy', 'link'],
+    image: ['image url', 'image', 'kep url', 'kep', 'photo', 'picture'],
+    artist: ['artist', 'eloado', 'zenekar', 'band', 'performer'],
+    info: ['info', 'description', 'leiras', 'megjegyzes', 'note', 'notes']
+  };
+
+  init();
+
+  function init(){
+    fetchSheetCSV()
+      .then(function(csvText){
+        var rows = parseCSV(csvText);
+        if (rows.length < 2){
+          renderEmpty();
+          return;
+        }
+        var header = rows[0];
+        var colMap = buildColumnMap(header);
+        if (colMap.date === undefined){
+          renderError('A táblázat szerkezete jelenleg nem felismerhető (hiányzik a dátum oszlop).');
+          return;
+        }
+
+        var events = [];
+        for (var i = 1; i < rows.length; i++){
+          var raw = rows[i];
+          if (!raw || isRowEmpty(raw)) continue;
+          try {
+            var ev = mapRowToEvent(raw, colMap);
+            if (ev) events.push(ev);
+          } catch (rowErr){
+            console.warn('Koncertmodul: egy sor kihagyva érvénytelen adat miatt.', rowErr);
+          }
+        }
+        renderEvents(events);
+      })
+      .catch(function(err){
+        console.error('Koncertmodul: hiba a betöltés során.', err);
+        renderError('Nem sikerült betölteni a koncertadatokat. Kérjük, próbáld meg később.');
+      })
+      .then(scheduleNotify);
+  }
+
+  function isRowEmpty(row){
+    for (var i = 0; i < row.length; i++){
+      if (row[i] && String(row[i]).trim() !== '') return false;
+    }
+    return true;
+  }
+
+  function fetchSheetCSV(){
+    var url = CONFIG.publishedBaseUrl +
+      '?gid=' + CONFIG.gid + '&single=true&output=csv&cachebust=' + Date.now();
+    return fetch(url, { cache: 'no-store' }).then(function(res){
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.text();
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // CSV feldolgozás
+  // ---------------------------------------------------------------
+
+  function parseCSV(text){
+    var rows = [];
+    var row = [];
+    var field = '';
+    var inQuotes = false;
+
+    for (var i = 0; i < text.length; i++){
+      var c = text[i];
+      if (inQuotes){
+        if (c === '"'){
+          if (text[i + 1] === '"'){ field += '"'; i++; }
+          else { inQuotes = false; }
+        } else {
+          field += c;
+        }
+      } else {
+        if (c === '"'){ inQuotes = true; }
+        else if (c === ','){ row.push(field); field = ''; }
+        else if (c === '\r'){ /* skip */ }
+        else if (c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; }
+        else { field += c; }
+      }
+    }
+    if (field.length > 0 || row.length > 0){ row.push(field); rows.push(row); }
+
+    return rows.filter(function(r){
+      return r.some(function(c){ return c && c.trim() !== ''; });
+    });
+  }
+
+  function stripAccents(s){
+    return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function normalizeHeader(h){
+    return stripAccents(h).toLowerCase().trim();
+  }
+
+  function buildColumnMap(headerRow){
+    var map = {};
+    var used = {};
+    var normalized = headerRow.map(normalizeHeader);
+
+    Object.keys(FIELD_SYNONYMS).forEach(function(key){
+      for (var i = 0; i < normalized.length; i++){
+        if (used[i]) continue;
+        if (FIELD_SYNONYMS[key].indexOf(normalized[i]) !== -1){
+          map[key] = i; used[i] = true; break;
+        }
+      }
+    });
+    Object.keys(FIELD_SYNONYMS).forEach(function(key){
+      if (map[key] !== undefined) return;
+      for (var i = 0; i < normalized.length; i++){
+        if (used[i]) continue;
+        var syns = FIELD_SYNONYMS[key];
+        var matched = false;
+        for (var s = 0; s < syns.length; s++){
+          if (normalized[i].indexOf(syns[s]) !== -1){ matched = true; break; }
+        }
+        if (matched){ map[key] = i; used[i] = true; break; }
+      }
+    });
+    return map;
+  }
+
+  // ---------------------------------------------------------------
+  // Sor -> esemény objektum
+  // ---------------------------------------------------------------
+
+  function mapRowToEvent(raw, colMap){
+    function get(key){
+      var idx = colMap[key];
+      if (idx === undefined) return '';
+      var v = raw[idx];
+      return v ? String(v).trim() : '';
+    }
+
+    var parsed = parseSheetDate(get('date'), get('time'));
+    if (!parsed) return null;
+
+    return {
+      parsed: parsed,
+      dateObj: parsed.dateObj,
+      hasTime: parsed.hasTime,
+      country: get('country'),
+      city: get('city'),
+      venue: get('venue'),
+      ticketLink: normalizeUrl(get('ticketLink')),
+      image: normalizeUrl(get('image')),
+      artist: get('artist'),
+      info: get('info')
+    };
+  }
+
+  function normalizeUrl(u){
+    if (!u) return '';
+    if (/^https?:\/\//i.test(u)) return u;
+    if (/^www\./i.test(u)) return 'https://' + u;
+    return '';
+  }
+
+  // ---------------------------------------------------------------
+  // Dátum- és időkezelés (Europe/Budapest)
+  // ---------------------------------------------------------------
+
+  function parseSheetDate(dateStr, timeStr){
+    if (!dateStr) return null;
+    var s = String(dateStr).trim();
+    var y, m, d, match;
+
+    match = s.match(/^(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})\.?$/);
+    if (match){
+      y = +match[1]; m = +match[2]; d = +match[3];
+    } else {
+      match = s.match(/^(\d{1,2})[.\-\/](\d{1,2})[.\-\/](\d{4})$/);
+      if (match){ d = +match[1]; m = +match[2]; y = +match[3]; }
+      else { return null; }
+    }
+    if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+
+    var hh = 0, mm = 0, hasTime = false;
+    if (timeStr){
+      var tmatch = String(timeStr).trim().match(/^(\d{1,2})[:.](\d{2})/);
+      if (tmatch){
+        var th = +tmatch[1], tm = +tmatch[2];
+        if (th >= 0 && th <= 23 && tm >= 0 && tm <= 59){
+          hh = th; mm = tm; hasTime = true;
+        }
+      }
+    }
+
+    var dateObj = new Date(Date.UTC(y, m - 1, d, hh, mm));
+    if (isNaN(dateObj.getTime())) return null;
+    if (dateObj.getUTCFullYear() !== y || dateObj.getUTCMonth() !== m - 1 || dateObj.getUTCDate() !== d){
+      return null; // pl. 2026.02.30 -> érvénytelen, JS automatikus átgörgetését szűrjük ki
+    }
+
+    return { dateObj: dateObj, hasTime: hasTime, y: y, m: m, d: d };
+  }
+
+  function getBudapestNow(){
+    var fmt = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Europe/Budapest',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hour12: false
+    });
+    var parts = fmt.formatToParts(new Date());
+    function get(t){
+      var p = parts.filter(function(x){ return x.type === t; })[0];
+      return p ? parseInt(p.value, 10) : 0;
+    }
+    var y = get('year'), m = get('month'), d = get('day');
+    var hh = get('hour'); if (hh === 24) hh = 0;
+    var mm = get('minute');
+    return { y: y, m: m, d: d, dateObj: new Date(Date.UTC(y, m - 1, d, hh, mm)) };
+  }
+
+  function dateOnlyValue(y, m, d){ return y * 10000 + m * 100 + d; }
+
+  function formatMonthShort(dateObj){
+    return new Intl.DateTimeFormat('hu-HU', { month: 'short', timeZone: 'UTC' }).format(dateObj).replace('.', '');
+  }
+
+  function formatWeekday(dateObj){
+    var wd = new Intl.DateTimeFormat('hu-HU', { weekday: 'long', timeZone: 'UTC' }).format(dateObj);
+    return wd.charAt(0).toUpperCase() + wd.slice(1);
+  }
+
+  function formatTime(hasTime, dateObj){
+    if (!hasTime) return '';
+    return new Intl.DateTimeFormat('hu-HU', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' }).format(dateObj);
+  }
+
+  // ---------------------------------------------------------------
+  // Renderelés
+  // ---------------------------------------------------------------
+
+  function renderEvents(events){
+    var now = getBudapestNow();
+    var nowVal = dateOnlyValue(now.y, now.m, now.d);
+
+    events.forEach(function(ev){
+      ev.dateVal = dateOnlyValue(ev.parsed.y, ev.parsed.m, ev.parsed.d);
+      ev.isPast = ev.dateVal < nowVal;
+    });
+
+    var future = events.filter(function(e){ return !e.isPast; })
+      .sort(function(a, b){ return a.dateObj - b.dateObj; });
+    var past = events.filter(function(e){ return e.isPast; })
+      .sort(function(a, b){ return b.dateObj - a.dateObj; });
+
+    appEl.innerHTML = '';
+
+    if (future.length === 0 && past.length === 0){
+      renderEmpty();
+      return;
+    }
+
+    if (future.length > 0){
+      var featured = future[0];
+      appEl.appendChild(buildHeroSection(featured));
+      var rest = future.slice(1);
+      if (rest.length > 0){
+        appEl.appendChild(buildListSection('Következő koncertek', rest, false));
+      }
+    } else {
+      appEl.appendChild(buildStatusMessage('Jelenleg nincs meghirdetett következő koncert.', false));
+    }
+
+    if (past.length > 0){
+      appEl.appendChild(buildListSection('Korábbi koncertek', past, true));
+    }
+  }
+
+  function renderEmpty(){
+    appEl.innerHTML = '';
+    appEl.appendChild(buildStatusMessage('Jelenleg nincs elérhető koncertinformáció.', false));
+  }
+
+  function renderError(msg){
+    appEl.innerHTML = '';
+    appEl.appendChild(buildStatusMessage(msg, true));
+  }
+
+  function buildStatusMessage(text, isError){
+    var div = document.createElement('p');
+    div.className = 'status-message' + (isError ? ' is-error' : '');
+    div.textContent = text;
+    return div;
+  }
+
+  function buildHeroSection(ev){
+    var section = document.createElement('section');
+    section.className = 'hero-section';
+
+    var label = document.createElement('p');
+    label.className = 'section-label';
+    label.textContent = 'Következő koncert';
+    section.appendChild(label);
+
+    var hero = document.createElement('div');
+    hero.className = 'hero';
+    if (ev.image){
+      hero.classList.add('has-image');
+      hero.style.backgroundImage =
+        'linear-gradient(180deg, rgba(12,11,14,0.55), rgba(12,11,14,0.92)), url("' +
+        ev.image.replace(/"/g, '%22') + '")';
+    }
+
+    hero.appendChild(buildDateBlock(ev, true));
+    hero.appendChild(buildContentBlock(ev, true));
+
+    section.appendChild(hero);
+    return section;
+  }
+
+  function buildDateBlock(ev, big){
+    var wrap = document.createElement('div');
+    wrap.className = big ? 'hero-date' : 'row-date';
+
+    if (big){
+      var weekday = document.createElement('div');
+      weekday.className = 'weekday';
+      weekday.textContent = formatWeekday(ev.dateObj);
+      wrap.appendChild(weekday);
+    }
+
+    var day = document.createElement('div');
+    day.className = 'day';
+    day.textContent = String(ev.parsed.d);
+    wrap.appendChild(day);
+
+    var monthYear = document.createElement('div');
+    monthYear.className = big ? 'month-year' : 'month';
+    monthYear.textContent = big
+      ? (formatMonthShort(ev.dateObj) + ' ' + ev.parsed.y)
+      : formatMonthShort(ev.dateObj);
+    wrap.appendChild(monthYear);
+
+    return wrap;
+  }
+
+  function buildContentBlock(ev, big){
+    var wrap = document.createElement('div');
+    wrap.className = big ? 'hero-content' : 'row-main';
+
+    var primaryText = ev.artist || ev.venue || 'Koncert';
+    var primary = document.createElement(big ? 'h3' : 'div');
+    primary.className = 'primary';
+    primary.textContent = primaryText;
+    wrap.appendChild(primary);
+
+    if (ev.artist && ev.venue){
+      var secondary = document.createElement('div');
+      secondary.className = 'secondary';
+      secondary.textContent = ev.venue;
+      wrap.appendChild(secondary);
+    }
+
+    var locationParts = [ev.city, ev.country].filter(Boolean);
+    var timeStr = formatTime(ev.hasTime, ev.dateObj);
+
+    if (big){
+      if (locationParts.length){
+        var loc = document.createElement('div');
+        loc.className = 'location';
+        loc.textContent = locationParts.join(', ');
+        wrap.appendChild(loc);
+      }
+      if (timeStr){
+        var t = document.createElement('div');
+        t.className = 'time';
+        t.textContent = timeStr + ' óra';
+        wrap.appendChild(t);
+      }
+      if (ev.info){
+        var info = document.createElement('p');
+        info.className = 'info';
+        info.textContent = ev.info;
+        wrap.appendChild(info);
+      }
+      if (ev.ticketLink){
+        var a = document.createElement('a');
+        a.className = 'ticket-btn';
+        a.href = ev.ticketLink;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.textContent = 'Jegyek';
+        wrap.appendChild(a);
+      }
+    } else {
+      var metaParts = [];
+      if (locationParts.length) metaParts.push(locationParts.join(', '));
+      if (timeStr) metaParts.push(timeStr);
+      if (metaParts.length){
+        var meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.textContent = metaParts.join(' · ');
+        wrap.appendChild(meta);
+      }
+    }
+
+    return wrap;
+  }
+
+  function buildListSection(title, items, isPast){
+    var section = document.createElement('section');
+    section.className = 'list-section';
+
+    var label = document.createElement('p');
+    label.className = 'section-label';
+    label.textContent = title;
+    section.appendChild(label);
+
+    var list = document.createElement('div');
+    list.className = 'list';
+
+    items.forEach(function(ev){
+      var row = document.createElement('div');
+      row.className = 'concert-row' + (isPast ? ' is-past' : '');
+      row.appendChild(buildDateBlock(ev, false));
+      row.appendChild(buildContentBlock(ev, false));
+
+      if (ev.ticketLink && !isPast){
+        var ticketWrap = document.createElement('div');
+        ticketWrap.className = 'row-ticket';
+        var a = document.createElement('a');
+        a.href = ev.ticketLink;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.textContent = 'Jegyek';
+        ticketWrap.appendChild(a);
+        row.appendChild(ticketWrap);
+      }
+
+      list.appendChild(row);
+    });
+
+    section.appendChild(list);
+    return section;
+  }
+
+  // ---------------------------------------------------------------
+  // Magasság jelzése a szülő (Odoo) oldal felé iframe-beágyazáshoz
+  // ---------------------------------------------------------------
+
+  function notifyHeight(){
+    var height = Math.ceil(document.documentElement.getBoundingClientRect().height);
+    try {
+      window.parent.postMessage({ type: 'concert-module-resize', height: height }, '*');
+    } catch (e){ /* iframe nélküli előnézetben nincs teendő */ }
+  }
+
+  var resizeScheduled = false;
+  function scheduleNotify(){
+    if (resizeScheduled) return;
+    resizeScheduled = true;
+    requestAnimationFrame(function(){
+      resizeScheduled = false;
+      notifyHeight();
+    });
+  }
+
+  if ('ResizeObserver' in window){
+    new ResizeObserver(scheduleNotify).observe(document.documentElement);
+  } else {
+    window.addEventListener('resize', scheduleNotify);
+  }
+  window.addEventListener('load', scheduleNotify);
+  if (document.fonts && document.fonts.ready){
+    document.fonts.ready.then(scheduleNotify).catch(function(){});
+  }
+
+})();
+</script>
+
+</body>
+</html>
